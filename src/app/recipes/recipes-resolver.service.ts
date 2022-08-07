@@ -1,3 +1,4 @@
+import { RecipeService } from './recipe.service';
 import {
   ActivatedRouteSnapshot,
   Resolve,
@@ -11,12 +12,21 @@ import { Injectable } from '@angular/core';
 
 @Injectable({ providedIn: 'any' })
 export class RecipesResolverService implements Resolve<Recipe[]> {
-  constructor(private dataStorageService: DataStorageService) {}
+  constructor(
+    private dataStorageService: DataStorageService,
+    private recipeService: RecipeService
+  ) {}
 
   resolve(
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Recipe[] | Observable<Recipe[]> | Promise<Recipe[]> {
-    return this.dataStorageService.fetchData();
+    const recipes = this.recipeService.getRecipes();
+
+    if (recipes.length === 0) {
+      return this.dataStorageService.fetchData();
+    } else {
+      return recipes;
+    }
   }
 }
