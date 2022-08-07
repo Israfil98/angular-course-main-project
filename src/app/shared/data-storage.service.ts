@@ -1,3 +1,4 @@
+import { Recipe } from './../recipes/recipe.model';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
@@ -16,6 +17,17 @@ export class DataStorageService {
       )
       .subscribe((res) => {
         console.log(res);
+      });
+  }
+
+  fetchData() {
+    this.http
+      .get<Recipe[]>(
+        'https://angular-course-main-project-default-rtdb.europe-west1.firebasedatabase.app/recipes.json'
+      )
+      .subscribe((res) => {
+        console.log(res);
+        this.recipeService.setRecipes(res);
       });
   }
 }

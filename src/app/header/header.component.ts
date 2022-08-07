@@ -15,4 +15,8 @@ export class HeaderComponent implements OnInit {
   onSaveData() {
     this.dataStorageService.storeData();
   }
+
+  onFetchData() {
+    this.dataStorageService.fetchData();
+  }
 }
