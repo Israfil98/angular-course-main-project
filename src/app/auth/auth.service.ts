@@ -1,7 +1,9 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { catchError } from 'rxjs/operators';
-import { throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
+import { throwError, Subject } from 'rxjs';
+
+import { User } from './user.model';
 
 export interface AuthResponseData {
   idToken: string;
@@ -16,6 +18,8 @@ export interface AuthResponseData {
 export class AuthService {
   private API_KEY = 'AIzaSyCnrupvLhmTJdItftZKqAfKbDQ5XNRwGs8';
 
+  user = new Subject<User>();
+
   constructor(private http: HttpClient) {}
 
   signup(email: string, password: string) {
@@ -28,7 +32,17 @@ export class AuthService {
           returnSecureToken: true,
         }
       )
-      .pipe(catchError(this.handleError));
+      .pipe(
+        catchError(this.handleError),
+        tap((resData) => {
+          this.handleAuth(
+            resData.email,
+            resData.localId,
+            resData.idToken,
+            +resData.expiresIn
+          );
+        })
+      );
   }
 
   signin(email: string, password: string) {
@@ -41,7 +55,28 @@ export class AuthService {
           returnSecureToken: true,
         }
       )
-      .pipe(catchError(this.handleError));
+      .pipe(
+        catchError(this.handleError),
+        tap((resData) => {
+          this.handleAuth(
+            resData.email,
+            resData.localId,
+            resData.idToken,
+            +resData.expiresIn
+          );
+        })
+      );
+  }
+
+  private handleAuth(
+    email: string,
+    id: string,
+    token: string,
+    expiresIn: number
+  ) {
+    const expirationDate = new Date(new Date().getTime() + expiresIn * 1000);
+    const user = new User(email, id, token, expirationDate);
+    this.user.next(user);
   }
 
   private handleError(errorRes: HttpErrorResponse) {
@@ -65,7 +100,7 @@ export class AuthService {
         errorMessage = 'This email is incorrect';
         break;
       case 'INVALID_PASSWORD':
-        errorMessage = 'The password is invalid';
+        errorMessage = 'This password is invalid';
         break;
       case 'USER_DISABLED':
         errorMessage = 'The user account has been disabled by an administrator';
