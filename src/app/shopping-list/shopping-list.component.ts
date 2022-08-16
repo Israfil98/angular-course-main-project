@@ -1,9 +1,10 @@
 import { Subscription, Observable } from 'rxjs';
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Store } from '@ngrx/store';
 
 import { Ingredient } from './../shared/ingredient.model';
 import { ShoppingListService } from './shopping-list.service';
-import { Store } from '@ngrx/store';
+
 @Component({
   selector: 'app-shopping-list',
   templateUrl: './shopping-list.component.html',
