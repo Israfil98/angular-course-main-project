@@ -3,10 +3,14 @@ import * as AuthActions from '../store/auth.actions';
 
 export interface AuthState {
   user: User | null;
+  authError: string | null;
+  isLoading: boolean;
 }
 
-const initialState = {
+const initialState: AuthState = {
   user: null,
+  authError: null,
+  isLoading: false,
 };
 
 export function authReducer(
@@ -24,11 +28,26 @@ export function authReducer(
       return {
         ...state,
         user: newUser,
+        authError: null,
+        isLoading: false,
       };
     case AuthActions.LOGOUT:
       return {
         ...state,
         user: null,
+      };
+    case AuthActions.START_LOGIN:
+      return {
+        ...state,
+        authError: null,
+        isLoading: true,
+      };
+    case AuthActions.LOGIN_FAIL:
+      return {
+        ...state,
+        user: null,
+        authError: action.payload,
+        isLoading: false,
       };
     default:
       return state;
