@@ -6,12 +6,10 @@ import {
   OnDestroy,
   ViewChild,
 } from '@angular/core';
-import { Router } from '@angular/router';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { NgForm } from '@angular/forms';
 
 import { PlaceholderDirective } from './../shared/placeholder.directive';
-import { AuthService, AuthResponseData } from './auth.service';
 import { AlertComponent } from './../shared/alert/alert.component';
 import * as fromApp from '../store/app.reducer';
 import * as AuthActions from './store/auth.actions';
@@ -29,8 +27,6 @@ export class AuthComponent implements OnInit, OnDestroy {
   private closeSub: Subscription;
 
   constructor(
-    private authService: AuthService,
-    private router: Router,
     private cmpFactoryResolver: ComponentFactoryResolver,
     private store: Store<fromApp.AppState>
   ) {}
@@ -53,37 +49,21 @@ export class AuthComponent implements OnInit, OnDestroy {
     const email = form.value.email;
     const password = form.value.password;
 
-    let authObservable: Observable<AuthResponseData>;
-
     if (!form.valid) {
       return;
     }
 
-    this.isLoading = true;
     if (this.isLoginMode) {
-      // authObservable = this.authService.signin(email, password);
       this.store.dispatch(
         new AuthActions.StartLogin({ email: email, password: password })
       );
       this.errorMessage = null;
     } else {
-      authObservable = this.authService.signup(email, password);
+      this.store.dispatch(
+        new AuthActions.SignupStart({ email: email, password: password })
+      );
       this.errorMessage = null;
     }
-
-    // authObservable.subscribe(
-    //   (resData) => {
-    //     console.log(resData);
-    //     this.isLoading = false;
-    //     this.router.navigate(['/recipes']);
-    //   },
-    //   (errMes) => {
-    //     console.log(errMes);
-    //     this.errorMessage = errMes;
-    //     this.showErrorAlert(errMes);
-    //     this.isLoading = false;
-    //   }
-    // );
 
     form.reset();
   }
