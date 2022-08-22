@@ -7,6 +7,8 @@ import { of, switchMap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import * as AuthActions from './auth.actions';
+import { User } from './../user.model';
+import { AuthService } from './../auth.service';
 
 export interface AuthResponseData {
   idToken: string;
@@ -24,6 +26,8 @@ const handleAuthentication = (
   idToken: string
 ) => {
   const expirationDate = new Date(new Date().getTime() + expiresIn * 1000);
+  const user = new User(email, localId, idToken, expirationDate);
+  localStorage.setItem('userData', JSON.stringify(user));
   return new AuthActions.AuthenticateSuccess({
     email: email,
     id: localId,
@@ -69,7 +73,8 @@ export class AuthEffects {
   constructor(
     private actions$: Actions,
     private http: HttpClient,
-    private router: Router
+    private router: Router,
+    private authService: AuthService
   ) {}
 
   @Effect() authSignup = this.actions$.pipe(
@@ -85,6 +90,9 @@ export class AuthEffects {
           }
         )
         .pipe(
+          tap((resData) => {
+            this.authService.setLogoutTimer(+resData.expiresIn * 1000);
+          }),
           map((resData) => {
             return handleAuthentication(
               +resData.expiresIn,
@@ -113,6 +121,9 @@ export class AuthEffects {
           }
         )
         .pipe(
+          tap((resData) => {
+            this.authService.setLogoutTimer(+resData.expiresIn * 1000);
+          }),
           map((resData) => {
             return handleAuthentication(
               +resData.expiresIn,
@@ -128,10 +139,54 @@ export class AuthEffects {
     })
   );
 
-  @Effect({ dispatch: false }) authSuccess = this.actions$.pipe(
+  @Effect() authAutoLogin = this.actions$.pipe(
+    ofType(AuthActions.AUTO_LOGIN),
+    map(() => {
+      const userData = JSON.parse(localStorage.getItem('userData'));
+
+      if (!userData) {
+        return { type: 'Dummy' };
+      }
+
+      const loadedUser = new User(
+        userData.email,
+        userData.id,
+        userData._token,
+        new Date(userData._tokenExpirationDate)
+      );
+
+      if (loadedUser.token) {
+        const expDuration =
+          new Date(userData._tokenExpirationDate).getTime() -
+          new Date().getTime();
+
+        this.authService.setLogoutTimer(expDuration);
+
+        return new AuthActions.AuthenticateSuccess({
+          email: loadedUser.email,
+          id: loadedUser.id,
+          token: loadedUser.token,
+          expirationDate: new Date(userData._tokenExpirationDate),
+        });
+      }
+
+      return { type: 'Dummy' };
+    })
+  );
+
+  @Effect({ dispatch: false }) authRedirect = this.actions$.pipe(
     ofType(AuthActions.AUTHENTICATE_SUCCESS),
     tap(() => {
       this.router.navigate(['/']);
+    })
+  );
+
+  @Effect({ dispatch: false }) authLogout = this.actions$.pipe(
+    ofType(AuthActions.LOGOUT),
+    tap(() => {
+      localStorage.removeItem('userData');
+      this.authService.clearLogoutTimer();
+      this.router.navigate(['/auth']);
     })
   );
 }

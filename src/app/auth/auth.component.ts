@@ -25,6 +25,7 @@ export class AuthComponent implements OnInit, OnDestroy {
   errorMessage: string = null;
   @ViewChild(PlaceholderDirective) alertHost: PlaceholderDirective;
   private closeSub: Subscription;
+  private storeSub: Subscription;
 
   constructor(
     private cmpFactoryResolver: ComponentFactoryResolver,
@@ -57,19 +58,17 @@ export class AuthComponent implements OnInit, OnDestroy {
       this.store.dispatch(
         new AuthActions.StartLogin({ email: email, password: password })
       );
-      this.errorMessage = null;
     } else {
       this.store.dispatch(
         new AuthActions.SignupStart({ email: email, password: password })
       );
-      this.errorMessage = null;
     }
 
     form.reset();
   }
 
   onHandleError() {
-    this.errorMessage = null;
+    this.store.dispatch(new AuthActions.ClearError());
   }
 
   private showErrorAlert(message: string) {
@@ -91,6 +90,9 @@ export class AuthComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.closeSub) {
       this.closeSub.unsubscribe();
+    }
+    if (this.storeSub) {
+      this.storeSub.unsubscribe();
     }
   }
 }

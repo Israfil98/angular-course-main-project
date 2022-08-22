@@ -10,15 +10,11 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Store } from '@ngrx/store';
 
-import { AuthService } from './auth.service';
 import * as fromApp from '../store/app.reducer';
 
 @Injectable({ providedIn: 'root' })
 export class AuthInterceptorService implements HttpInterceptor {
-  constructor(
-    private authService: AuthService,
-    private store: Store<fromApp.AppState>
-  ) {}
+  constructor(private store: Store<fromApp.AppState>) {}
 
   intercept(
     req: HttpRequest<any>,
